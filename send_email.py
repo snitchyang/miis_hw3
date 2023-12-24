@@ -3,11 +3,21 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
+import zipfile
+import os
 
 token = 'whvohbsoivtkcide'
 
 
-def sendEmail(from_addr, to_addr, title, content, img_path = None, excel_path = None):
+def zip_dir(dir_path, zip_path):
+    zipf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(dir_path):
+        for file in files:
+            zipf.write(os.path.join(root, file))
+    zipf.close()
+
+
+def sendEmail(from_addr, to_addr, title, content, img_path = None, excel_path = None, zip_path = None):
     # 1. Create a message
     msg = MIMEMultipart()
     msg['From'] = Header(from_addr)
@@ -29,6 +39,13 @@ def sendEmail(from_addr, to_addr, title, content, img_path = None, excel_path = 
         att.add_header('Content-Disposition', 'attachment', filename='info.xlsx')
         msg.attach(att)
 
+    if zip_path:
+        with open(zip_path, 'rb') as f:
+            zip_data = f.read()
+        att = MIMEApplication(zip_data)
+        att.add_header('Content-Disposition', 'attachment', filename='invoice.zip')
+        msg.attach(att)
+
     # 2. Create an SMTP object
     smtp = SMTP_SSL('smtp.qq.com')
 
@@ -43,4 +60,4 @@ def sendEmail(from_addr, to_addr, title, content, img_path = None, excel_path = 
 
 
 if __name__ == '__main__':
-    sendEmail('snitchyang@qq.com', 'snitchyang@qq.com', 'test', 'test', img_path='./data/b/b0.jpg')
+    zip_dir('.', './test.zip')
